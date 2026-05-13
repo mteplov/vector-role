@@ -14,6 +14,13 @@
     executable: /bin/bash
   become: true
 
+- name: Create Vector config directory
+  file:
+    path: /etc/vector
+    state: directory
+    mode: '0755'
+  become: true
+
 - name: Deploy config
   template:
     src: vector.toml.j2
