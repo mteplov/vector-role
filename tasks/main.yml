@@ -1,21 +1,26 @@
 ---
-- name: Download Vector package
-  get_url:
-    url: https://packages.timber.io/vector/latest/vector-amd64.deb
-    dest: /tmp/vector.deb
+- name: Add Vector repository
+  shell: |
+    curl -1sLf 'https://repositories.timber.io/public/vector/cfg/setup/bash.deb.sh' | bash
+  become: true
 
 - name: Install Vector
   apt:
-    deb: /tmp/vector.deb
+    name: vector
+    state: present
+    update_cache: true
+  become: true
 
 - name: Deploy config
   template:
     src: vector.toml.j2
     dest: /etc/vector/vector.toml
   notify: restart vector
+  become: true
 
-- name: Start Vector
+- name: Enable Vector
   service:
     name: vector
     state: started
     enabled: true
+  become: true
