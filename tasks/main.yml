@@ -1,35 +1,17 @@
 ---
-- name: Install prerequisites
+- name: Install dependencies
   apt:
     name:
       - curl
-      - gnupg
-      - apt-transport-https
     state: present
     update_cache: true
   become: true
 
-- name: Add Vector GPG key
-  apt_key:
-    url: https://repositories.timber.io/public/vector/gpg.0xA3A3F3A3B0B0C0C0.key
-    state: present
-  become: true
-
-- name: Add Vector repository
-  apt_repository:
-    repo: "deb https://repositories.timber.io/public/vector/debian stable main"
-    state: present
-  become: true
-
-- name: Update apt cache
-  apt:
-    update_cache: true
-  become: true
-
-- name: Install Vector
-  apt:
-    name: vector
-    state: present
+- name: Install Vector 0.55.0
+  shell: |
+    curl --proto '=https' --tlsv1.2 -sSfL https://sh.vector.dev | VECTOR_VERSION=0.55.0 bash -s -- -y
+  args:
+    executable: /bin/bash
   become: true
 
 - name: Deploy config
