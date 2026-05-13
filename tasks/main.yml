@@ -3,24 +3,37 @@
   apt:
     name:
       - curl
+      - tar
     state: present
     update_cache: true
   become: true
 
-- name: Download Vector binary
+- name: Create vector user bin dir
+  file:
+    path: /usr/local/bin
+    state: directory
+  become: true
+
+- name: Download Vector archive
   get_url:
-    url: "https://packages.timber.io/vector/latest/vector-amd64.tar.gz"
+    url: "https://packages.timber.io/vector/latest/vector-0.55.0-x86_64-unknown-linux-gnu.tar.gz"
     dest: /tmp/vector.tar.gz
   become: true
 
 - name: Extract Vector
   unarchive:
     src: /tmp/vector.tar.gz
-    dest: /usr/local/bin/
+    dest: /tmp/
     remote_src: yes
   become: true
 
-- name: Create Vector config directory
+- name: Move vector binary
+  shell: |
+    cp /tmp/vector-*/bin/vector /usr/local/bin/vector
+    chmod +x /usr/local/bin/vector
+  become: true
+
+- name: Create config directory
   file:
     path: /etc/vector
     state: directory
@@ -32,7 +45,7 @@
     dest: /etc/vector/vector.toml
   become: true
 
-- name: Create systemd service for Vector
+- name: Create systemd service
   copy:
     dest: /etc/systemd/system/vector.service
     content: |
@@ -53,7 +66,7 @@
     daemon_reload: true
   become: true
 
-- name: Enable and start Vector
+- name: Enable Vector
   systemd:
     name: vector
     state: started
