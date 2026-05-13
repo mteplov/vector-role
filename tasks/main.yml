@@ -7,29 +7,54 @@
     update_cache: true
   become: true
 
-- name: Install Vector 0.55.0
-  shell: |
-    curl --proto '=https' --tlsv1.2 -sSfL https://sh.vector.dev | VECTOR_VERSION=0.55.0 bash -s -- -y
-  args:
-    executable: /bin/bash
+- name: Download Vector binary
+  get_url:
+    url: "https://packages.timber.io/vector/latest/vector-amd64.tar.gz"
+    dest: /tmp/vector.tar.gz
+  become: true
+
+- name: Extract Vector
+  unarchive:
+    src: /tmp/vector.tar.gz
+    dest: /usr/local/bin/
+    remote_src: yes
   become: true
 
 - name: Create Vector config directory
   file:
     path: /etc/vector
     state: directory
-    mode: '0755'
   become: true
 
 - name: Deploy config
   template:
     src: vector.toml.j2
     dest: /etc/vector/vector.toml
-  notify: restart vector
   become: true
 
-- name: Enable Vector service
-  service:
+- name: Create systemd service for Vector
+  copy:
+    dest: /etc/systemd/system/vector.service
+    content: |
+      [Unit]
+      Description=Vector
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/local/bin/vector
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+  become: true
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: true
+  become: true
+
+- name: Enable and start Vector
+  systemd:
     name: vector
     state: started
     enabled: true
